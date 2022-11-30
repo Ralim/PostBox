@@ -1,0 +1,9 @@
+version: "3"
+services:
+  postbox:
+    stdin_open: true
+    tty: true
+    build:
+      context: .
+    ports:
+      - 8080:8080
