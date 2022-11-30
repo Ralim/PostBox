@@ -18,7 +18,7 @@ func TestFileCache_IngestFile(t *testing.T) {
 	if len(cacheObj.ListFiles()) != 1 {
 		t.Errorf("should return our file, %v", cacheObj.ListFiles())
 	}
-	reader, err := cacheObj.GetFile(cacheObj.ListFiles()[0].Key)
+	reader, _, err := cacheObj.GetFile(cacheObj.ListFiles()[0].Key)
 	if err != nil {
 		t.Errorf("Should get file reader %v", err)
 	}

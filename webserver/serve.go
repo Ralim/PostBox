@@ -2,14 +2,15 @@ package webserver
 
 import (
 	"fmt"
-	"github.com/justinas/alice"
-	"github.com/ralim/PostBox/webserver/cache"
-	"github.com/rs/zerolog/hlog"
-	"github.com/rs/zerolog/log"
 	"net/http"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/justinas/alice"
+	"github.com/ralim/PostBox/webserver/cache"
+	"github.com/rs/zerolog/hlog"
+	"github.com/rs/zerolog/log"
 )
 
 type WebServer struct {
@@ -45,7 +46,7 @@ func (server *WebServer) StartWebserver() {
 	c = c.Append(hlog.UserAgentHandler("user_agent"))
 	c = c.Append(hlog.RefererHandler("referer"))
 
-	// Here is your final handleS
+	// Here is your final handle
 	h := c.Then(server)
 	server.httpServer = &http.Server{Addr: fmt.Sprintf(":%d", 8080), Handler: h}
 	if err := server.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
