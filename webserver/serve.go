@@ -16,12 +16,14 @@ import (
 type WebServer struct {
 	httpServer *http.Server
 	fileCache  *cache.FileCache
+	bearerAuth string
 }
 
-func NewServer() *WebServer {
+func NewServer(bearerAuth string) *WebServer {
 	return &WebServer{
 		httpServer: nil,
 		fileCache:  cache.NewFileCache(),
+		bearerAuth: bearerAuth,
 	}
 }
 
