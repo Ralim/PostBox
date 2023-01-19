@@ -3,11 +3,12 @@ package cache
 import (
 	"context"
 	"errors"
-	"github.com/rs/zerolog/log"
 	"io"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 var ErrNoSuchFile = errors.New("no such file")
@@ -33,13 +34,15 @@ func NewFileCache() *FileCache {
 		panic(err)
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	return &FileCache{
+	f := &FileCache{
 		storageFolder: tempFolder,
 		fileTimeout:   time.Hour,
 		files:         make(map[string]fileCacheEntry),
 		workerContext: ctx,
 		workerCancel:  cancel,
 	}
+	go f.cleanupWorker()
+	return f
 }
 
 func (cache *FileCache) Close() {

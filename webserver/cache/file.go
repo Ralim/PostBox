@@ -3,10 +3,11 @@ package cache
 import (
 	"crypto/sha1"
 	"encoding/base64"
-	"github.com/rs/zerolog/log"
 	"io"
 	"os"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type fileCacheEntry struct {
@@ -40,12 +41,13 @@ func (ce *fileCacheEntry) checkCleanup() bool {
 	}
 	return !ce.valid
 }
-func (ce *fileCacheEntry) forceClean() {
-	if !ce.valid {
-		return
-	}
-	if err := os.Remove(ce.fileName); err != nil {
-		log.Error().Err(err).Str("path", ce.filePath).Msg("File cleanup failed")
-	}
-	ce.valid = false
-}
+
+// func (ce *fileCacheEntry) forceClean() {
+// 	if !ce.valid {
+// 		return
+// 	}
+// 	if err := os.Remove(ce.fileName); err != nil {
+// 		log.Error().Err(err).Str("path", ce.filePath).Msg("File cleanup failed")
+// 	}
+// 	ce.valid = false
+// }

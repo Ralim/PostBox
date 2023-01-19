@@ -12,11 +12,11 @@ func (server *WebServer) handleFile(w http.ResponseWriter, r *http.Request) {
 	file, filename, err := server.fileCache.GetFile(strings.Replace(fileRequestedName, "/", "", -1))
 	if err != nil {
 		w.WriteHeader(404)
-		w.Write([]byte(err.Error()))
+		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
 	defer file.Close()
 	//Otherwise write out the file
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
-	io.Copy(w, file)
+	_, _ = io.Copy(w, file)
 }

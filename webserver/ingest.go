@@ -1,15 +1,19 @@
 package webserver
 
 import (
-	"github.com/rs/zerolog/log"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
 )
 
 // Handle incoming POST or PUT requests
 // And decode these into a reader + a filname
 
 func (server WebServer) handlePOST(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(4 * 1024 * 1024) //Max in ram limit
+	if err := r.ParseMultipartForm(32 * 1024 * 1024); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	filesAdded := make([]string, 0, 4)
 	if r.MultipartForm != nil {
 		for _, fileList := range r.MultipartForm.File {
@@ -20,13 +24,16 @@ func (server WebServer) handlePOST(w http.ResponseWriter, r *http.Request) {
 				} else {
 					defer file.Close()
 					log.Info().Str("Filename", header.Filename).Int64("size", header.Size).Int("index", i).Msg("Multi-part form file")
-					server.fileCache.IngestFile(header.Filename, file)
-					filesAdded = append(filesAdded, header.Filename)
+					if err := server.fileCache.IngestFile(header.Filename, file); err == nil {
+						filesAdded = append(filesAdded, header.Filename)
+					} else {
+						w.WriteHeader(http.StatusInternalServerError)
+					}
 				}
 			}
 		}
 	}
 	log.Info().Strs("filesAdded", filesAdded).Msg("Import done")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("OK"))
+	_, _ = w.Write([]byte("OK"))
 }
