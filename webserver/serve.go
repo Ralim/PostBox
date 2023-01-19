@@ -1,6 +1,8 @@
 package webserver
 
 import (
+	"crypto/sha256"
+	"crypto/subtle"
 	"fmt"
 	"net/http"
 	"path"
@@ -14,16 +16,20 @@ import (
 )
 
 type WebServer struct {
-	httpServer *http.Server
-	fileCache  *cache.FileCache
-	bearerAuth string
+	httpServer   *http.Server
+	fileCache    *cache.FileCache
+	authUserHash []byte
+	authPassHash []byte
+	authEnabled  bool
 }
 
-func NewServer(bearerAuth string) *WebServer {
+func NewServer(userHash, passwordHash []byte) *WebServer {
 	return &WebServer{
-		httpServer: nil,
-		fileCache:  cache.NewFileCache(),
-		bearerAuth: bearerAuth,
+		httpServer:   nil,
+		fileCache:    cache.NewFileCache(),
+		authUserHash: userHash,
+		authPassHash: passwordHash,
+		authEnabled:  len(userHash) > 0 && len(passwordHash) > 0,
 	}
 }
 
@@ -48,7 +54,6 @@ func (server *WebServer) StartWebserver() {
 	c = c.Append(hlog.UserAgentHandler("user_agent"))
 	c = c.Append(hlog.RefererHandler("referer"))
 
-	// Here is your final handle
 	h := c.Then(server)
 	server.httpServer = &http.Server{Addr: fmt.Sprintf(":%d", 8080), Handler: h}
 	if err := server.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -66,6 +71,26 @@ func (server *WebServer) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusOK)
 		return
 	}
+
+	if server.authEnabled {
+		username, password, ok := req.BasicAuth()
+		if ok {
+			usernameHash := sha256.Sum256([]byte(username))
+			passwordHash := sha256.Sum256([]byte(password))
+			usernameMatch := (subtle.ConstantTimeCompare(usernameHash[:], server.authUserHash) == 1)
+			passwordMatch := (subtle.ConstantTimeCompare(passwordHash[:], server.authPassHash) == 1)
+			if !usernameMatch || !passwordMatch {
+				ok = false
+			}
+
+		}
+		if !ok {
+			res.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
+			http.Error(res, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}
+
 	if req.Method == http.MethodPost {
 		server.handlePOST(res, req)
 		return
