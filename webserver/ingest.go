@@ -12,6 +12,7 @@ import (
 func (server WebServer) handlePOST(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(32 * 1024 * 1024); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(err.Error()))
 		return
 	}
 	filesAdded := make([]string, 0, 4)
